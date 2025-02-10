@@ -57,7 +57,16 @@ interface Seat {
       <div class="workspace">
         <div class="desk-container" [style.width.px]="tableWidth + 100" [style.height.px]="tableLength + 100">
           <div class="desk-layout" [style.width.px]="tableWidth" [style.height.px]="tableLength">
-            <div class="table" [style.background]="tableColor"></div>
+            <div class="table" 
+               [style.background]="tableColor"
+               (mousedown)="startTableDrag($event)"
+               [style.width.px]="tableWidth"
+               [style.height.px]="tableLength">
+            <div class="resize-handle top-left" (mousedown)="startResize($event, 'top-left')"></div>
+            <div class="resize-handle top-right" (mousedown)="startResize($event, 'top-right')"></div>
+            <div class="resize-handle bottom-left" (mousedown)="startResize($event, 'bottom-left')"></div>
+            <div class="resize-handle bottom-right" (mousedown)="startResize($event, 'bottom-right')"></div>
+          </div>
             @for (seat of seats; track seat.id) {
               <div class="seat" 
                    [class.occupied]="seat.isOccupied"
@@ -209,17 +218,51 @@ interface Seat {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) perspective(1000px) rotateX(10deg);
+      transform: translate(-50%, -50%) perspective(1500px) rotateX(25deg);
       width: 90%;
       height: 80%;
-      background: linear-gradient(145deg, #34495e, #2c3e50);
-      border-radius: 20px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-      border: 2px solid rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
+      background: linear-gradient(145deg, #744a2d, #8b5e3c);
+      border-radius: 15px;
+      box-shadow: 
+        0 20px 50px rgba(0,0,0,0.4),
+        inset 0 2px 15px rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.08);
       position: relative;
-      overflow: hidden;
+      cursor: move;
     }
+
+    .table::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="50" height="50" fill="rgba(255,255,255,0.03)"/><rect x="50" y="50" width="50" height="50" fill="rgba(255,255,255,0.03)"/></svg>');
+      background-size: 30px 30px;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .resize-handle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .resize-handle:hover {
+      transform: scale(1.2);
+      background: rgba(255,255,255,0.3);
+    }
+
+    .resize-handle.top-left { top: -10px; left: -10px; }
+    .resize-handle.top-right { top: -10px; right: -10px; }
+    .resize-handle.bottom-left { bottom: -10px; left: -10px; }
+    .resize-handle.bottom-right { bottom: -10px; right: -10px; }
 
     .table::before {
       content: '';
@@ -340,6 +383,10 @@ export class DeskComponent implements OnInit, OnDestroy {
   draggedSeat: Seat | null = null;
   lastMouseX = 0;
   lastMouseY = 0;
+  isResizing = false;
+  resizeHandle: string | null = null;
+  isDraggingTable = false;
+  tablePosition = { x: 0, y: 0 };
   seatStyle = {
     width: 70,
     height: 70,
@@ -455,8 +502,61 @@ export class DeskComponent implements OnInit, OnDestroy {
     }
   }
 
+  startTableDrag(event: MouseEvent) {
+    if (event.target === event.currentTarget) {
+      this.isDraggingTable = true;
+      this.lastMouseX = event.clientX;
+      this.lastMouseY = event.clientY;
+      event.preventDefault();
+    }
+  }
+
+  startResize(event: MouseEvent, handle: string) {
+    this.isResizing = true;
+    this.resizeHandle = handle;
+    this.lastMouseX = event.clientX;
+    this.lastMouseY = event.clientY;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   private onMouseMove(e: MouseEvent) {
-    if (this.draggedSeat) {
+    if (this.isResizing) {
+      const deltaX = e.clientX - this.lastMouseX;
+      const deltaY = e.clientY - this.lastMouseY;
+
+      switch (this.resizeHandle) {
+        case 'bottom-right':
+          this.tableWidth = Math.max(400, this.tableWidth + deltaX);
+          this.tableLength = Math.max(300, this.tableLength + deltaY);
+          break;
+        case 'bottom-left':
+          this.tableWidth = Math.max(400, this.tableWidth - deltaX);
+          this.tableLength = Math.max(300, this.tableLength + deltaY);
+          break;
+        case 'top-right':
+          this.tableWidth = Math.max(400, this.tableWidth + deltaX);
+          this.tableLength = Math.max(300, this.tableLength - deltaY);
+          break;
+        case 'top-left':
+          this.tableWidth = Math.max(400, this.tableWidth - deltaX);
+          this.tableLength = Math.max(300, this.tableLength - deltaY);
+          break;
+      }
+
+      this.lastMouseX = e.clientX;
+      this.lastMouseY = e.clientY;
+      this.updateTable();
+    } else if (this.isDraggingTable) {
+      const deltaX = e.clientX - this.lastMouseX;
+      const deltaY = e.clientY - this.lastMouseY;
+      
+      this.tablePosition.x += deltaX;
+      this.tablePosition.y += deltaY;
+      
+      this.lastMouseX = e.clientX;
+      this.lastMouseY = e.clientY;
+    } else if (this.draggedSeat) {
       const deltaX = e.clientX - this.lastMouseX;
       const deltaY = e.clientY - this.lastMouseY;
 
@@ -472,10 +572,13 @@ export class DeskComponent implements OnInit, OnDestroy {
   }
 
   private onMouseUp() {
-    if (this.draggedSeat) {
+    if (this.draggedSeat || this.isResizing || this.isDraggingTable) {
       this.saveState();
     }
     this.draggedSeat = null;
+    this.isResizing = false;
+    this.resizeHandle = null;
+    this.isDraggingTable = false;
   }
 
   rotateSeat(event: MouseEvent, seat: Seat) {
