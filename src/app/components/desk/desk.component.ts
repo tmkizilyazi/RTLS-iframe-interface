@@ -91,17 +91,31 @@ interface Seat {
     }
 
     .control-panel {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      background: rgba(255,255,255,0.9);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(31,38,135,0.15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.18);
     }
 
     .controls {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
+      gap: 25px;
+      margin-top: 25px;
+      padding: 15px;
+      background: rgba(248,249,250,0.8);
+      border-radius: 15px;
+    }
+
+    h2 {
+      color: #2c3e50;
+      font-size: 1.8em;
+      margin-bottom: 15px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .size-controls, .style-controls {
@@ -144,27 +158,51 @@ interface Seat {
       transform: translate(-50%, -50%);
       width: 90%;
       height: 80%;
-      background: linear-gradient(145deg, #8B4513, #A0522D);
-      border-radius: 15px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      background: linear-gradient(145deg, #3d4a5c, #2c3e50);
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      border: 2px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
     }
 
     .seat {
       position: absolute;
       cursor: move;
       user-select: none;
-      transition: transform 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .seat-content {
       width: 100%;
       height: 100%;
-      border-radius: 12px;
+      border-radius: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      background: linear-gradient(145deg, #2196F3, #1976D2);
+      box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+      border: 2px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(5px);
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+
+    .seat-content:before {
+      content: '';
+      position: absolute;
+      width: 80%;
+      height: 10%;
+      bottom: -5px;
+      left: 10%;
+      background: rgba(0,0,0,0.2);
+      filter: blur(4px);
+      border-radius: 50%;
+    }
+
+    .seat:hover .seat-content {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
     }
 
     .seat-number {
@@ -216,9 +254,9 @@ export class DeskComponent implements OnInit, OnDestroy {
   lastMouseX = 0;
   lastMouseY = 0;
   seatStyle = {
-    width: 60,
-    height: 60,
-    color: '#2196F3'
+    width: 70,
+    height: 70,
+    color: 'linear-gradient(145deg, #2196F3, #1976D2)'
   };
 
   constructor() {
