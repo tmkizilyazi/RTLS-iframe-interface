@@ -317,7 +317,16 @@ export class DeskComponent implements OnInit, OnDestroy {
   private intervalId: any;
   private boundMouseMove: (e: MouseEvent) => void;
   private boundMouseUp: () => void;
-  private handleIframeMessage: ((event: MessageEvent) => void) | null = null;
+  private handleIframeMessage = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.seats) {
+        this.updateSeatsFromIframe(data.seats);
+      }
+    } catch (error) {
+      console.error('Error processing iframe message:', error);
+    }
+  };
 
 
   constructor() {
