@@ -356,18 +356,23 @@ export class DeskComponent implements OnInit, OnDestroy {
   }
 
   private setupEventListeners() {
-    document.addEventListener('mousemove', this.boundMouseMove);
-    document.addEventListener('mouseup', this.boundMouseUp);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('mousemove', this.boundMouseMove);
+      document.addEventListener('mouseup', this.boundMouseUp);
+    }
   }
 
   private cleanupEventListeners() {
-    document.removeEventListener('mousemove', this.boundMouseMove);
-    document.removeEventListener('mouseup', this.boundMouseUp);
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('mousemove', this.boundMouseMove);
+      document.removeEventListener('mouseup', this.boundMouseUp);
+    }
   }
 
-
   private setupIframeListener() {
-    window.addEventListener('message', this.handleIframeMessage);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('message', this.handleIframeMessage);
+    }
   }
 
   initializeSeats() {
