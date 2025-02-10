@@ -352,7 +352,9 @@ export class DeskComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.cleanupEventListeners();
-    window.removeEventListener('message', this.handleIframeMessage);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('message', this.handleIframeMessage);
+    }
   }
 
   private setupEventListeners() {
