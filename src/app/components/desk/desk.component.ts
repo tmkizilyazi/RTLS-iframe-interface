@@ -188,10 +188,14 @@ interface Seat {
     .desk-container {
       position: relative;
       padding: 50px;
-      background: #fff;
+      background: linear-gradient(145deg, #f0f2f5, #e6e9ec);
       border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      box-shadow: 
+        0 10px 30px rgba(0,0,0,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.6);
       overflow: hidden;
+      perspective: 1000px;
+      transform-style: preserve-3d;
     }
 
     .desk-layout {
@@ -205,14 +209,47 @@ interface Seat {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%) perspective(1000px) rotateX(10deg);
       width: 90%;
       height: 80%;
-      background: linear-gradient(145deg, #3d4a5c, #2c3e50);
+      background: linear-gradient(145deg, #34495e, #2c3e50);
       border-radius: 20px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
       border: 2px solid rgba(255,255,255,0.1);
       backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .table::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        rgba(255,255,255,0.1) 0%,
+        rgba(255,255,255,0.05) 50%,
+        rgba(255,255,255,0.1) 100%
+      );
+      transform: skewY(-45deg);
+      pointer-events: none;
+    }
+
+    .table::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40%;
+      background: linear-gradient(to bottom,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0.2) 100%
+      );
+      transform-origin: bottom;
+      transform: skewY(2deg);
     }
 
     .seat {
