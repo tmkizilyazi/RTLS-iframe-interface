@@ -317,13 +317,22 @@ export class DeskComponent implements OnInit, OnDestroy {
   private intervalId: any;
   private boundMouseMove: (e: MouseEvent) => void;
   private boundMouseUp: () => void;
-  private handleIframeMessage: (event: MessageEvent) => void;
+  private handleIframeMessage: ((event: MessageEvent) => void) | null = null;
 
 
   constructor() {
     this.boundMouseMove = this.onMouseMove.bind(this);
     this.boundMouseUp = this.onMouseUp.bind(this);
-    this.handleIframeMessage = this.handleIframeMessage.bind(this);
+    this.handleIframeMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.seats) {
+          this.updateSeatsFromIframe(data.seats);
+        }
+      } catch (error) {
+        console.error('Error processing iframe message:', error);
+      }
+    };
   }
 
   ngOnInit() {
@@ -347,16 +356,6 @@ export class DeskComponent implements OnInit, OnDestroy {
     document.removeEventListener('mouseup', this.boundMouseUp);
   }
 
-  private handleIframeMessage = (event: MessageEvent) => {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.seats) {
-        this.updateSeatsFromIframe(data.seats);
-      }
-    } catch (error) {
-      console.error('Error processing iframe message:', error);
-    }
-  };
 
   private setupIframeListener() {
     window.addEventListener('message', this.handleIframeMessage);
