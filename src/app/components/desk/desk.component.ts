@@ -411,6 +411,7 @@ export class DeskComponent implements OnInit, OnDestroy {
   rotateY = 0;
   rotateZ = 0;
   tablePrimaryColor = '#8B4513';
+  tableColor: string = 'linear-gradient(145deg, #8B4513, #A0522D)'; // Add this line
   tableSecondaryColor = '#A0522D';
   draggedSeat: Seat | null = null;
   lastMouseX = 0;
