@@ -1,4 +1,3 @@
-
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -318,10 +317,13 @@ export class DeskComponent implements OnInit, OnDestroy {
   private intervalId: any;
   private boundMouseMove: (e: MouseEvent) => void;
   private boundMouseUp: () => void;
+  private handleIframeMessage: (event: MessageEvent) => void;
+
 
   constructor() {
     this.boundMouseMove = this.onMouseMove.bind(this);
     this.boundMouseUp = this.onMouseUp.bind(this);
+    this.handleIframeMessage = this.handleIframeMessage.bind(this);
   }
 
   ngOnInit() {
@@ -345,33 +347,19 @@ export class DeskComponent implements OnInit, OnDestroy {
     document.removeEventListener('mouseup', this.boundMouseUp);
   }
 
-  private setupIframeListener() {
-    window.addEventListener('message', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.seats) {
-          this.updateSeatsFromIframe(data.seats);
-        }
-      } catch (error) {
-        console.error('Error processing iframe message:', error);
+  private handleIframeMessage = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.seats) {
+        this.updateSeatsFromIframe(data.seats);
       }
-    });
-  }
+    } catch (error) {
+      console.error('Error processing iframe message:', error);
+    }
+  };
 
-  private updateSeatsFromIframe(iframeSeats: any[]) {
-    this.seats = this.seats.map(seat => {
-      const iframeSeat = iframeSeats.find(s => s.id === seat.id);
-      if (iframeSeat) {
-        return {
-          ...seat,
-          isOccupied: iframeSeat.isOccupied,
-          signalStrength: iframeSeat.signalStrength || 100,
-          batteryLevel: iframeSeat.batteryLevel || 100,
-          lastUpdate: new Date()
-        };
-      }
-      return seat;
-    });
+  private setupIframeListener() {
+    window.addEventListener('message', this.handleIframeMessage);
   }
 
   initializeSeats() {
@@ -379,7 +367,7 @@ export class DeskComponent implements OnInit, OnDestroy {
       { x: 100, y: 100 }, { x: 100, y: 400 },
       { x: 600, y: 100 }, { x: 600, y: 400 }
     ];
-    
+
     this.seats = defaultPositions.map((pos, index) => ({
       id: index + 1,
       isOccupied: false,
@@ -427,10 +415,10 @@ export class DeskComponent implements OnInit, OnDestroy {
     if (this.draggedSeat) {
       const deltaX = e.clientX - this.lastMouseX;
       const deltaY = e.clientY - this.lastMouseY;
-      
+
       const newX = Math.min(Math.max(0, this.draggedSeat.position.x + deltaX), this.tableWidth - 80);
       const newY = Math.min(Math.max(0, this.draggedSeat.position.y + deltaY), this.tableLength - 80);
-      
+
       this.draggedSeat.position = { x: newX, y: newY };
       this.lastMouseX = e.clientX;
       this.lastMouseY = e.clientY;
@@ -460,5 +448,21 @@ export class DeskComponent implements OnInit, OnDestroy {
 
   getActiveSeats(): number {
     return this.seats.filter(seat => seat.isOccupied).length;
+  }
+
+  private updateSeatsFromIframe(iframeSeats: any[]) {
+    this.seats = this.seats.map(seat => {
+      const iframeSeat = iframeSeats.find(s => s.id === seat.id);
+      if (iframeSeat) {
+        return {
+          ...seat,
+          isOccupied: iframeSeat.isOccupied,
+          signalStrength: iframeSeat.signalStrength || 100,
+          batteryLevel: iframeSeat.batteryLevel || 100,
+          lastUpdate: new Date()
+        };
+      }
+      return seat;
+    });
   }
 }
