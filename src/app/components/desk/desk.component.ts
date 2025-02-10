@@ -104,9 +104,10 @@ interface Seat {
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 25px;
       margin-top: 25px;
-      padding: 15px;
-      background: rgba(248,249,250,0.8);
+      padding: 20px;
+      background: rgba(255,255,255,0.03);
       border-radius: 15px;
+      border: 1px solid rgba(255,255,255,0.05);
     }
 
     h2 {
@@ -127,14 +128,63 @@ interface Seat {
     .control-btn {
       padding: 12px 24px;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s ease;
-      background: #4CAF50;
+      background: linear-gradient(135deg, #4CAF50, #45a049);
       color: white;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
     }
 
+    .control-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .control-btn:active {
+      transform: translateY(0);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #4CAF50;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    }
+
+    input[type="number"], input[type="color"] {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      width: 100px;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
     .desk-container {
       position: relative;
       padding: 50px;
