@@ -320,13 +320,15 @@ export class DeskComponent implements OnInit {
     this.setupRTLSSimulation();
     
     window.addEventListener('message', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.seats) {
-          this.updateSeatsOccupancy(data.seats);
+      if (typeof event.data === 'string') {
+        try {
+          const data = JSON.parse(event.data);
+          if (data && data.seats && Array.isArray(data.seats)) {
+            this.updateSeatsOccupancy(data.seats);
+          }
+        } catch (e) {
+          console.error('Error processing RTLS data:', e);
         }
-      } catch (e) {
-        console.error('Error processing RTLS data:', e);
       }
     });
   }
@@ -334,13 +336,20 @@ export class DeskComponent implements OnInit {
   private setupRTLSSimulation() {
     // Simüle RTLS güncellemeleri
     setInterval(() => {
-      this.seats = this.seats.map(seat => ({
-        ...seat,
-        isOccupied: Math.random() > 0.5,
-        signalStrength: Math.random() * 100,
-        batteryLevel: Math.random() * 100,
-        lastUpdate: new Date()
-      }));
+      this.seats = this.seats.map(seat => {
+        try {
+          return {
+            ...seat,
+            isOccupied: Math.random() > 0.5,
+            signalStrength: Math.random() * 100,
+            batteryLevel: Math.random() * 100,
+            lastUpdate: new Date()
+          };
+        } catch (e) {
+          console.error('Seat update error:', e);
+          return seat;
+        }
+      });
     }, 5000);
   }
 
@@ -418,10 +427,19 @@ export class DeskComponent implements OnInit {
   }
 
   updateSeatsOccupancy(seatData: any[]) {
-    this.seats = this.seats.map((seat, index) => ({
-      ...seat,
-      isOccupied: seatData[index]?.isOccupied ?? seat.isOccupied,
-      lastUpdate: new Date()
-    }));
+    try {
+      this.seats = this.seats.map((seat, index) => {
+        const newData = seatData[index];
+        return {
+          ...seat,
+          isOccupied: newData?.isOccupied ?? seat.isOccupied,
+          lastUpdate: new Date(),
+          signalStrength: newData?.signalStrength ?? seat.signalStrength,
+          batteryLevel: newData?.batteryLevel ?? seat.batteryLevel
+        };
+      });
+    } catch (e) {
+      console.error('Error updating seats:', e);
+    }
   }
 }
