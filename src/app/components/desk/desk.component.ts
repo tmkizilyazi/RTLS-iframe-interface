@@ -29,6 +29,33 @@ interface Seat {
           <button (click)="addSeat()" class="control-btn add">
             <i class="fas fa-plus"></i> Yeni Koltuk
           </button>
+          <div class="rotation-controls">
+            <label>
+              <span>X Rotasyonu:</span>
+              <input type="range" [(ngModel)]="rotateX" min="0" max="360" step="1" (input)="updateTableRotation()">
+              <span>{{rotateX}}°</span>
+            </label>
+            <label>
+              <span>Y Rotasyonu:</span>
+              <input type="range" [(ngModel)]="rotateY" min="0" max="360" step="1" (input)="updateTableRotation()">
+              <span>{{rotateY}}°</span>
+            </label>
+            <label>
+              <span>Z Rotasyonu:</span>
+              <input type="range" [(ngModel)]="rotateZ" min="0" max="360" step="1" (input)="updateTableRotation()">
+              <span>{{rotateZ}}°</span>
+            </label>
+          </div>
+          <div class="color-controls">
+            <label>
+              <span>Masa Rengi 1:</span>
+              <input type="color" [(ngModel)]="tablePrimaryColor" (change)="updateTableColors()">
+            </label>
+            <label>
+              <span>Masa Rengi 2:</span>
+              <input type="color" [(ngModel)]="tableSecondaryColor" (change)="updateTableColors()">
+            </label>
+          </div>
           <div class="size-controls">
             <label>
               <span>Masa Genişliği:</span>
@@ -218,10 +245,11 @@ interface Seat {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) perspective(1500px) rotateX(25deg);
+      transform-style: preserve-3d;
+      transform: translate(-50%, -50%) perspective(2000px) rotateX(var(--rotateX, 45deg)) rotateY(var(--rotateY, 0deg)) rotateZ(var(--rotateZ, 0deg));
       width: 90%;
       height: 80%;
-      background: linear-gradient(145deg, #744a2d, #8b5e3c);
+      background: linear-gradient(145deg, var(--table-primary, #8B4513), var(--table-secondary, #A0522D));
       border-radius: 15px;
       box-shadow: 
         0 20px 50px rgba(0,0,0,0.4),
@@ -379,7 +407,11 @@ export class DeskComponent implements OnInit, OnDestroy {
   seats: Seat[] = [];
   tableWidth = 800;
   tableLength = 600;
-  tableColor = 'linear-gradient(145deg, #8B4513, #A0522D)';
+  rotateX = 45;
+  rotateY = 0;
+  rotateZ = 0;
+  tablePrimaryColor = '#8B4513';
+  tableSecondaryColor = '#A0522D';
   draggedSeat: Seat | null = null;
   lastMouseX = 0;
   lastMouseY = 0;
@@ -429,7 +461,12 @@ export class DeskComponent implements OnInit, OnDestroy {
         seats: this.seats,
         tableWidth: this.tableWidth,
         tableLength: this.tableLength,
-        seatStyle: this.seatStyle
+        seatStyle: this.seatStyle,
+        rotateX: this.rotateX,
+        rotateY: this.rotateY,
+        rotateZ: this.rotateZ,
+        tablePrimaryColor: this.tablePrimaryColor,
+        tableSecondaryColor: this.tableSecondaryColor
       }));
     }
   }
@@ -569,6 +606,25 @@ export class DeskComponent implements OnInit, OnDestroy {
       this.lastMouseY = e.clientY;
       this.saveState();
     }
+  }
+
+  updateTableRotation() {
+    const table = document.querySelector('.table') as HTMLElement;
+    if (table) {
+      table.style.setProperty('--rotateX', `${this.rotateX}deg`);
+      table.style.setProperty('--rotateY', `${this.rotateY}deg`);
+      table.style.setProperty('--rotateZ', `${this.rotateZ}deg`);
+    }
+    this.saveState();
+  }
+
+  updateTableColors() {
+    const table = document.querySelector('.table') as HTMLElement;
+    if (table) {
+      table.style.setProperty('--table-primary', this.tablePrimaryColor);
+      table.style.setProperty('--table-secondary', this.tableSecondaryColor);
+    }
+    this.saveState();
   }
 
   private onMouseUp() {
