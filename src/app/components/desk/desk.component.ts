@@ -61,12 +61,16 @@ interface Seat {
                  (contextmenu)="rotateSeat($event, seat)">
               <div class="seat-info">
                 <div class="sensor-id">ID: {{seat.id}}</div>
-                <div class="signal-indicator" [style.opacity]="getSeatSignalOpacity(seat)">
-                  <i class="fas fa-signal"></i>
-                </div>
-                <div class="battery-indicator" [class.low]="isBatteryLow(seat)">
-                  <i class="fas fa-battery-half"></i>
-                </div>
+                @if (seat.signalStrength !== undefined) {
+                  <div class="signal-indicator" [style.opacity]="getSeatSignalOpacity(seat)">
+                    <i class="fas fa-signal"></i>
+                  </div>
+                }
+                @if (seat.batteryLevel !== undefined) {
+                  <div class="battery-indicator" [class.low]="isBatteryLow(seat)">
+                    <i class="fas fa-battery-half"></i>
+                  </div>
+                }
               </div>
               <div class="seat-icon">
                 <div class="seat-back"></div>
@@ -74,9 +78,11 @@ interface Seat {
               </div>
               <div class="status" [class.active]="seat.isOccupied">
                 {{seat.isOccupied ? 'Dolu' : 'Boş'}}
-                <span class="timestamp" *ngIf="seat.lastUpdate">
-                  {{seat.lastUpdate | date:'HH:mm:ss'}}
-                </span>
+                @if (seat.lastUpdate) {
+                  <span class="timestamp">
+                    {{seat.lastUpdate | date:'HH:mm:ss'}}
+                  </span>
+                }
               </div>
             </div>
           }
@@ -99,6 +105,11 @@ interface Seat {
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin: 0 0 20px 0;
+      color: #333;
     }
 
     .controls {
@@ -154,6 +165,7 @@ interface Seat {
       background: white;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
     }
 
     .desk-layout {
@@ -194,7 +206,7 @@ interface Seat {
       height: 80px;
       cursor: move;
       user-select: none;
-      transition: transform 0.3s ease;
+      transition: transform 0.2s ease;
     }
 
     .seat-info {
@@ -211,6 +223,7 @@ interface Seat {
       border-radius: 10px;
       opacity: 0;
       transition: opacity 0.3s;
+      white-space: nowrap;
     }
 
     .seat:hover .seat-info {
@@ -286,6 +299,12 @@ interface Seat {
     .dragging {
       opacity: 0.8;
       z-index: 1000;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
   `]
 })
