@@ -327,14 +327,12 @@ export class DeskComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.initializeSeats();
     this.setupEventListeners();
-    this.startSimulation();
+    this.setupIframeListener();
   }
 
   ngOnDestroy() {
     this.cleanupEventListeners();
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-    }
+    window.removeEventListener('message', this.handleIframeMessage);
   }
 
   private setupEventListeners() {
@@ -347,20 +345,33 @@ export class DeskComponent implements OnInit, OnDestroy {
     document.removeEventListener('mouseup', this.boundMouseUp);
   }
 
-  private startSimulation() {
-    this.intervalId = setInterval(() => {
-      this.updateRandomSeats();
-    }, 5000);
+  private setupIframeListener() {
+    window.addEventListener('message', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.seats) {
+          this.updateSeatsFromIframe(data.seats);
+        }
+      } catch (error) {
+        console.error('Error processing iframe message:', error);
+      }
+    });
   }
 
-  private updateRandomSeats() {
-    this.seats = this.seats.map(seat => ({
-      ...seat,
-      isOccupied: Math.random() > 0.5,
-      signalStrength: Math.random() * 100,
-      batteryLevel: Math.random() * 100,
-      lastUpdate: new Date()
-    }));
+  private updateSeatsFromIframe(iframeSeats: any[]) {
+    this.seats = this.seats.map(seat => {
+      const iframeSeat = iframeSeats.find(s => s.id === seat.id);
+      if (iframeSeat) {
+        return {
+          ...seat,
+          isOccupied: iframeSeat.isOccupied,
+          signalStrength: iframeSeat.signalStrength || 100,
+          batteryLevel: iframeSeat.batteryLevel || 100,
+          lastUpdate: new Date()
+        };
+      }
+      return seat;
+    });
   }
 
   initializeSeats() {
