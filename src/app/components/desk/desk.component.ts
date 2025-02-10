@@ -336,6 +336,7 @@ export class DeskComponent implements OnInit {
     setInterval(() => {
       this.seats = this.seats.map(seat => ({
         ...seat,
+        isOccupied: Math.random() > 0.5,
         signalStrength: Math.random() * 100,
         batteryLevel: Math.random() * 100,
         lastUpdate: new Date()
