@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 interface Seat {
   id: number;
+  name: string;
   isOccupied: boolean;
   position: { x: number; y: number };
   rotation: number;
@@ -33,6 +34,15 @@ interface Seat {
               <span>Uzunluk:</span>
               <input type="number" [(ngModel)]="tableLength" (change)="updateTable()" min="300" max="800" step="50">
             </label>
+            <label>
+              <span>Şekil:</span>
+              <select [(ngModel)]="tableShape" (change)="updateTable()">
+                <option value="rectangle">Dikdörtgen</option>
+                <option value="circle">Daire</option>
+                <option value="oval">Oval</option>
+                <option value="triangle">Üçgen</option>
+              </select>
+            </label>
           </div>
         </div>
         <div class="stats">
@@ -48,43 +58,37 @@ interface Seat {
       </div>
 
       <div class="workspace">
-        <div class="desk-layout" [style.width.px]="tableWidth" [style.height.px]="tableLength">
+        <div class="desk-layout" [style.width.px]="tableWidth" [style.height.px]="tableLength"
+             (mousedown)="startResize($event)">
           <div class="grid-overlay"></div>
-          <div class="table"></div>
-          @for (seat of seats; track seat.id) {
-            <div class="seat" 
-                 [class.occupied]="seat.isOccupied"
-                 [class.dragging]="draggedSeat?.id === seat.id"
-                 [style.transform]="getSeatTransform(seat)"
-                 (mousedown)="startDrag($event, seat)"
-                 (contextmenu)="rotateSeat($event, seat)">
-              <div class="seat-info">
-                <div class="sensor-id">ID: {{seat.id}}</div>
-                @if (seat.signalStrength !== undefined) {
-                  <div class="signal-indicator" [style.opacity]="getSeatSignalOpacity(seat)">
-                    <i class="fas fa-signal"></i>
-                  </div>
-                }
-                @if (seat.batteryLevel !== undefined) {
-                  <div class="battery-indicator" [class.low]="isBatteryLow(seat)">
-                    <i class="fas fa-battery-half"></i>
-                  </div>
-                }
+          <div class="table" [ngClass]="tableShape"></div>
+          <div *ngFor="let seat of seats; trackBy: trackBySeatId" 
+               class="seat" 
+               [class.occupied]="seat.isOccupied"
+               [class.dragging]="draggedSeat?.id === seat.id"
+               [style.transform]="getSeatTransform(seat)"
+               (mousedown)="startDrag($event, seat)"
+               (contextmenu)="rotateSeat($event, seat)">
+            <div class="seat-info">
+              <div class="sensor-id">{{seat.name}}</div>
+              <div *ngIf="seat.signalStrength !== undefined" class="signal-indicator" [style.opacity]="getSeatSignalOpacity(seat)">
+                <i class="fas fa-signal"></i>
               </div>
-              <div class="seat-icon">
-                <div class="seat-back"></div>
-                <div class="seat-bottom"></div>
-              </div>
-              <div class="status" [class.active]="seat.isOccupied">
-                {{seat.isOccupied ? 'Dolu' : 'Boş'}}
-                @if (seat.lastUpdate) {
-                  <span class="timestamp">
-                    {{seat.lastUpdate | date:'HH:mm:ss'}}
-                  </span>
-                }
+              <div *ngIf="seat.batteryLevel !== undefined" class="battery-indicator" [class.low]="isBatteryLow(seat)">
+                <i class="fas fa-battery-half"></i>
               </div>
             </div>
-          }
+            <div class="seat-icon">
+              <div class="seat-back"></div>
+              <div class="seat-bottom"></div>
+            </div>
+            <div class="status" [class.active]="seat.isOccupied">
+              {{seat.isOccupied ? 'Dolu' : 'Boş'}}
+              <span *ngIf="seat.lastUpdate" class="timestamp">
+                {{seat.lastUpdate | date:'HH:mm:ss'}}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -194,9 +198,22 @@ interface Seat {
       transform: translate(-50%, -50%);
       width: 80%;
       height: 60%;
-      background: linear-gradient(145deg, #8B4513, #A0522D);
+      background: url('/assets/images/wood.jpg') no-repeat center center;
+      background-size: cover;
       border-radius: 10px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .table.circle {
+      border-radius: 50%;
+    }
+
+    .table.oval {
+      border-radius: 50% / 25%;
+    }
+
+    .table.triangle {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
     }
 
     .seat {
@@ -311,7 +328,9 @@ export class DeskComponent implements OnInit, OnDestroy {
   seats: Seat[] = [];
   tableWidth = 800;
   tableLength = 600;
+  tableShape: 'rectangle' | 'circle' | 'oval' | 'triangle' = 'rectangle';
   draggedSeat: Seat | null = null;
+  resizing = false;
   lastMouseX = 0;
   lastMouseY = 0;
   private intervalId: any;
@@ -327,7 +346,6 @@ export class DeskComponent implements OnInit, OnDestroy {
       console.error('Error processing iframe message:', error);
     }
   };
-
 
   constructor() {
     this.boundMouseMove = this.onMouseMove.bind(this);
@@ -346,6 +364,7 @@ export class DeskComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initializeSeats();
+    this.loadSeatPositions();
     this.setupEventListeners();
     this.setupIframeListener();
   }
@@ -385,6 +404,7 @@ export class DeskComponent implements OnInit, OnDestroy {
 
     this.seats = defaultPositions.map((pos, index) => ({
       id: index + 1,
+      name: `Seat ${index + 1}`,
       isOccupied: false,
       position: pos,
       rotation: 0,
@@ -398,6 +418,7 @@ export class DeskComponent implements OnInit, OnDestroy {
     const newId = Math.max(0, ...this.seats.map(s => s.id)) + 1;
     this.seats.push({
       id: newId,
+      name: `Seat ${newId}`,
       isOccupied: false,
       position: { x: 200, y: 200 },
       rotation: 0,
@@ -437,16 +458,37 @@ export class DeskComponent implements OnInit, OnDestroy {
       this.draggedSeat.position = { x: newX, y: newY };
       this.lastMouseX = e.clientX;
       this.lastMouseY = e.clientY;
+    } else if (this.resizing) {
+      const deltaX = e.clientX - this.lastMouseX;
+      const deltaY = e.clientY - this.lastMouseY;
+
+      this.tableWidth = Math.max(400, this.tableWidth + deltaX);
+      this.tableLength = Math.max(300, this.tableLength + deltaY);
+
+      this.lastMouseX = e.clientX;
+      this.lastMouseY = e.clientY;
     }
   }
 
   private onMouseUp() {
     this.draggedSeat = null;
+    this.resizing = false;
+    this.saveSeatPositions();
+  }
+
+  startResize(event: MouseEvent) {
+    if (event.button === 0) {
+      event.preventDefault();
+      this.resizing = true;
+      this.lastMouseX = event.clientX;
+      this.lastMouseY = event.clientY;
+    }
   }
 
   rotateSeat(event: MouseEvent, seat: Seat) {
     event.preventDefault();
     seat.rotation = (seat.rotation + 90) % 360;
+    this.saveSeatPositions();
   }
 
   getSeatTransform(seat: Seat): string {
@@ -465,6 +507,10 @@ export class DeskComponent implements OnInit, OnDestroy {
     return this.seats.filter(seat => seat.isOccupied).length;
   }
 
+  trackBySeatId(index: number, seat: Seat): number {
+    return seat.id;
+  }
+
   private updateSeatsFromIframe(iframeSeats: any[]) {
     this.seats = this.seats.map(seat => {
       const iframeSeat = iframeSeats.find(s => s.id === seat.id);
@@ -479,5 +525,43 @@ export class DeskComponent implements OnInit, OnDestroy {
       }
       return seat;
     });
+  }
+
+  private saveSeatPositions() {
+    if (typeof localStorage !== 'undefined') {
+      const data = {
+        seats: this.seats.map(seat => ({
+          id: seat.id,
+          position: seat.position,
+          rotation: seat.rotation
+        })),
+        tableWidth: this.tableWidth,
+        tableLength: this.tableLength,
+        tableShape: this.tableShape
+      };
+      localStorage.setItem('deskState', JSON.stringify(data));
+    }
+  }
+  private loadSeatPositions() {
+    if (typeof localStorage !== 'undefined') {
+      const savedState = localStorage.getItem('deskState');
+      if (savedState) {
+        const { seats, tableWidth, tableLength, tableShape } = JSON.parse(savedState);
+        this.seats = this.seats.map(seat => {
+          const savedSeat = seats.find((s: any) => s.id === seat.id);
+          if (savedSeat) {
+            return {
+              ...seat,
+              position: savedSeat.position,
+              rotation: savedSeat.rotation
+            };
+          }
+          return seat;
+        });
+        this.tableWidth = tableWidth;
+        this.tableLength = tableLength;
+        this.tableShape = tableShape;
+      }
+    }
   }
 }
